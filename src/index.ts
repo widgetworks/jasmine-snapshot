@@ -2,6 +2,7 @@ import * as difflib from "difflib";
 import { xml, json } from "vkbeautify";
 import X2JS = require("x2js");
 import "./overrideconsole";
+import * as util from "./util";
 
 let current_snapshot_object: { [key: string]: string } = {};
 export function registerSnapshots(snapshot_object: { [key: string]: string }, name: string)
@@ -120,15 +121,15 @@ class AutoSnapshotSuite
                     }
                     else if (d.charAt(0) === "-")
                     {
-                        snapshot_file_html += `<span style="color: red">${d.replace(/&nbsp;/g, "&amp;nbsp;").replace(/ /g, "&nbsp;")}</span><br //>`;
+                        snapshot_file_html += `<span style="color: red">${util.escape(d).replace(/ /g, "&nbsp;")}</span><br //>`;
                     }
                     else if (d.charAt(0) === "+")
                     {
-                        snapshot_file_html += `<span style="color: green">${d.replace(/&nbsp;/g, "&amp;nbsp;").replace(/ /g, "&nbsp;")}</span><br //>`;
+                        snapshot_file_html += `<span style="color: green">${util.escape(d).replace(/ /g, "&nbsp;")}</span><br //>`;
                     }
                     else
                     {
-                        snapshot_file_html += `${d.replace(/&nbsp;/g, "&amp;nbsp;").replace(/ /g, "&nbsp;")}<br //>`;
+                        snapshot_file_html += `${util.escape(d).replace(/ /g, "&nbsp;")}<br //>`;
                     }
                 });
             }
@@ -142,7 +143,7 @@ class AutoSnapshotSuite
         for (let snapshot of this.snapshots)
         {
             has_snapshots = true;
-            snapshot_file_html += `<br //>&nbsp;&nbsp;&nbsp;&nbsp;"${snapshot.key}": \`${snapshot.text.replace(/&nbsp;/g, "&amp;nbsp;")}\`,`;
+            snapshot_file_html += `<br //>&nbsp;&nbsp;&nbsp;&nbsp;"${snapshot.key}": \`${util.escape(snapshot.text)}\`,`;
         }
 
         if (has_snapshots)
