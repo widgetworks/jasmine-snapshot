@@ -11,6 +11,46 @@ export function registerSnapshots(snapshot_object: { [key: string]: string }, na
     current_suite = new AutoSnapshotSuite(current_level, name);
 }
 
+/**
+ * CFH - add a single place where we can decode the auto-snapshot content.
+ *
+ * Decode non-printable characters for content comparison
+ */
+function getSnapshotContent(snapshotKey: string): string {
+    let snapshot = current_snapshot_object[snapshotKey];
+    if (snapshot){
+        snapshot = decodeSnapshotForCompare(snapshot);
+    }
+    return snapshot;
+}
+
+const NBSP_CHAR = String.fromCharCode(0xA0); // explcit nbsp character
+function encodeForAutoSnapshot(one_line_actual: string): string {
+    one_line_actual = one_line_actual.replace(new RegExp(NBSP_CHAR, 'g'), '&nbsp;');
+    return one_line_actual;
+}
+function decodeSnapshotForCompare(encodedString: string): string {
+    // Inverse of `encodeForAutoSnapshot()`
+    let decodedString = encodedString.replace(/&nbsp;/g, NBSP_CHAR);
+    return decodedString;
+}
+
+const reJsonNewline = /\\n/g;
+
+/**
+ * 2019-12-19 CFH
+ * Escape a JSON string so it can be displayed as a JavaScript object in the auto-snapshot section.
+ *
+ * This is needed because the result will be sent through `JSON.parse()` and any actual newline characters will break the parsing.
+ */
+function escapeJsonForAutosnapshot(snapshotText: string): string {
+    const escapedText: string = util.escape(snapshotText)
+        .replace(reJsonNewline, '\\\\n');
+    return escapedText;
+}
+// End CFH
+
+
 class AutoSnapshot
 {
     public key: string;
@@ -51,8 +91,11 @@ class AutoSnapshotSuite
         auto_snapshot.key = create_one_liner(`${current_spec} ${this.last_automagic_snapshot_number}`);
         auto_snapshot.text = create_one_liner(actual);
         this.snapshots.push(auto_snapshot);
-
-        let snapshot = current_snapshot_object[auto_snapshot.key];
+    
+        /**
+         * CFH - decode non-printable characters for comparison
+         */
+        let snapshot = getSnapshotContent(auto_snapshot.key);
         return snapshot ? snapshot : "";
     }
 
@@ -76,7 +119,17 @@ class AutoSnapshotSuite
         for (let snapshot of this.snapshots)
         {
             has_snapshots = true;
-            snapshot_file_text += `\n\t"${snapshot.key}": \`${snapshot.text}\`,`;
+            
+            /*
+            2019-12-18 CFH
+            Escape JSON text that is be displayed as a JSON object.
+            i.e. convert "\n" => "\\n"
+            
+            Because the content will be sent through `JSON.parse()` on the way back in before being parsed
+            (again) as actual JSON.
+            */
+            const escapedText: string = escapeJsonForAutosnapshot(snapshot.text);
+            snapshot_file_text += `\n\t"${snapshot.key}": \`${escapedText}\`,`;
         }
 
         if (has_snapshots)
@@ -135,21 +188,25 @@ class AutoSnapshotSuite
             }
         });
 
-        snapshot_file_html += `<p style="text-decoration: underline; font-weight: bold;">If actual is valid, update your snapshot with the following <//p>`;
+        snapshot_file_html += `<p style="text-decoration: underline; font-weight: bold;">If actual is valid, update your snapshot with the following </p>`;
         snapshot_file_html += "<div style='color: blue;'>{";
 
         let has_snapshots = false;
-
         for (let snapshot of this.snapshots)
         {
             has_snapshots = true;
-            snapshot_file_html += `<br //>&nbsp;&nbsp;&nbsp;&nbsp;"${snapshot.key}": \`${util.escape(snapshot.text)}\`,`;
+            
+            /*
+            CFH: escape newlines for the blue HTML content section
+            */
+            const escapedText: string = escapeJsonForAutosnapshot(snapshot.text);
+            snapshot_file_html += `<br />&nbsp;&nbsp;&nbsp;&nbsp;"${snapshot.key}": \`${escapedText}\`,`;
         }
 
         if (has_snapshots)
         {
             snapshot_file_html = snapshot_file_html.slice(0, snapshot_file_html.length - 1);
-            snapshot_file_html += "<br //>}</div></p>";
+            snapshot_file_html += "<br />}</div></p>";
         }
 
         return snapshot_file_html;
@@ -274,6 +331,14 @@ export function MatchesSnapshot(snapshot: string, actual: string, automagic?: bo
 function create_one_liner(actual: string)
 {
     let one_line_actual = actual.replace(/\n/g, "").replace(/\t/g, "").replace(/\\"/g, `\\\\\\"`);
+    
+    /**
+     * CFH - encode non-printing characters (e.g. actual non-breaking space characters)
+     * before displaying as auto-snapshot content (i.e. so copy-pasting the content is correct).
+     */
+    one_line_actual = encodeForAutoSnapshot(one_line_actual);
+    // End CFH
+    
     while (one_line_actual.indexOf("  ") !== -1)
     {
         one_line_actual = one_line_actual.replace(/(  )/g, " ");
