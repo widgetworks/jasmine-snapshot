@@ -33,8 +33,9 @@ describe("sample snapshotting", () =>
     describe("complex examples", () =>
     {
         let snapshots = {
-            "sample snapshotting complex examples does a more complex js snapshot 1": `{ "DEFAULT_TIMEOUT_INTERVAL": 5000, "MAX_PRETTY_PRINT_ARRAY_LENGTH": 100, "MAX_PRETTY_PRINT_DEPTH": 40, "currentEnv_": { "clock": {} }, "errors": {}, "matchers": {}, "matchersUtil": {}, "util": {}, "version": "2.6.1"}`,
-            "sample snapshotting complex examples does a more complex html snapshot 1": `{ "script": { "__text": "window.__karma__.loaded();", "_type": "text/javascript" }}`
+            "sample snapshotting complex examples does a more complex js snapshot 1": `{ "DEFAULT_TIMEOUT_INTERVAL": 5000, "MAX_PRETTY_PRINT_ARRAY_LENGTH": 100, "MAX_PRETTY_PRINT_DEPTH": 40, "currentEnv_": { "clock": {} }, "location": { "ancestorOrigins": {}, "hash": "", "host": "localhost:9876", "hostname": "localhost", "href": "http://localhost:9876/debug.html", "origin": "http://localhost:9876", "pathname": "/debug.html", "port": "9876", "protocol": "http:", "search": "" }, "matchers": {}, "matchersUtil": {}, "util": {}, "version": "2.6.1"}`,
+            "sample snapshotting complex examples does a more complex html snapshot 1": `{ "script": { "__text": "window.__karma__.loaded();", "_type": "text/javascript" }}`,
+            "sample snapshotting complex examples encodes html entities 1": ``,
         };
 
         beforeAll(() =>
@@ -54,6 +55,22 @@ describe("sample snapshotting", () =>
         it("does a more complex html snapshot", () =>
         {
             let actual = window.document.body.innerHTML;
+
+            expectxml(actual).toMatchSnapshot();
+        });
+
+        fit("encodes html entities", () =>
+        {
+            // write content
+            const sourceEl = window.document.createElement('div');
+            sourceEl.innerHTML = `<p>&nbsp;test&nbsp;</p>`;
+            
+            const divEl = window.document.createElement('div');
+            divEl.innerHTML = `
+<p>&nbsp;test&nbsp;</p>
+`;
+            
+            let actual = divEl.innerHTML;
 
             expectxml(actual).toMatchSnapshot();
         });

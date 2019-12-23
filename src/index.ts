@@ -18,7 +18,7 @@ class AutoSnapshot
 }
 
 let auto_snapshot_siute_history = new Array<AutoSnapshotSuite>();
-class AutoSnapshotSuite
+export class AutoSnapshotSuite
 {
     public snapshots = Array<AutoSnapshot>();
     public level = 0;

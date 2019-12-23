@@ -21,12 +21,14 @@
   },
   "devDependencies": {
     "@types/jasmine": "^2.5.47",
-    "jasmine": "^2.6.0",
-    "jasmine-core": "^2.6.1",
+    "jasmine": "2.6.0",
+    "jasmine-core": "2.6.1",
+    "jest": "^24.9.0",
+    "karma": "^1.6.0",
     "karma-chrome-launcher": "^2.1.1",
     "karma-jasmine": "^1.1.0",
     "karma-typescript": "^3.0.1",
-    "karma": "^1.6.0",
+    "ts-jest": "^24.2.0",
     "ts-loader": "^2.0.3",
     "tslint": "*",
     "typescript": "*",
@@ -61,9 +63,10 @@
       "node_modules"
     ],
     "transform": {
-      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+      ".(ts|tsx)": "ts-jest"
     },
     "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
-    "testResultsProcessor": "<rootDir>/node_modules/ts-jest/coverageprocessor.js"
+    "preset": "ts-jest",
+    "testMatch": null
   }
 }
